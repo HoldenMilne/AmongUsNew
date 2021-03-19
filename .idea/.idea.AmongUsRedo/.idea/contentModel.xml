@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="$USER_HOME$/.Rider2017.3/system/resharper-host/local/Transient/ReSharperHost/v11/SolutionCaches/_AmongUsRedo.-1697601169.00" t="ExcludeRecursive" />
+    <e p="$PROJECT_DIR$" t="IncludeRecursive">
+      <e p="AmongUsRedo.sln" t="IncludeFlat" />
+      <e p="Assembly-CSharp-Editor-firstpass.csproj" t="IncludeRecursive" />
+      <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
+      <e p="Assets" t="Include">
+        <e p="AltFiller.cs" t="Include" />
+        <e p="ColorizeGhost.cs" t="Include" />
+        <e p="Controller.cs" t="Include" />
+        <e p="CutoutUIMask.cs" t="Include" />
+        <e p="DeathPanelController.cs" t="Include" />
+        <e p="DownloadUploadController.cs" t="Include" />
+        <e p="EmptyGameController.cs" t="Include" />
+        <e p="EvilBlinker.cs" t="Include" />
+        <e p="FuelGameController.cs" t="Include" />
+        <e p="GameController.cs" t="Include" />
+        <e p="GarbageController.cs" t="Include" />
+        <e p="GifAnimator.cs" t="Include" />
+        <e p="HandleArmsUpdater.cs" t="Include" />
+        <e p="HandleController.cs" t="Include" />
+        <e p="IP" t="Include">
+          <e p="IPCoder.cs" t="Include" />
+        </e>
+        <e p="Phone" t="Include">
+          <e p="PhoneController.cs" t="Include" />
+        </e>
+        <e p="Plugins" t="Include">
+          <e p="Editor" t="Include">
+            <e p="JetBrains" t="Include">
+              <e p="Unity3DRider.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="PrimeShieldsController.cs" t="Include" />
+        <e p="RandomBG.cs" t="Include" />
+        <e p="Resources" t="Include">
+          <e p="Sprites" t="Include">
+            <e p="README.txt" t="Include" />
+          </e>
+        </e>
+        <e p="Scaler.cs" t="Include" />
+        <e p="Scenes" t="Include">
+          <e p="Task Completion Data.txt" t="Include" />
+        </e>
+        <e p="Scripts" t="Include">
+          <e p="Chart Course" t="Include">
+            <e p="ChartCourseShipController.cs" t="Include" />
+          </e>
+          <e p="Clear Asteroids" t="Include">
+            <e p="AsteroidController.cs" t="Include" />
+            <e p="ClearAsteroidsBG.cs" t="Include" />
+            <e p="ClearAsteroidsController.cs" t="Include" />
+          </e>
+          <e p="Fix Wiring" t="Include">
+            <e p="FixWiringController.cs" t="Include" />
+          </e>
+          <e p="GoalAnimator.cs" t="Include" />
+          <e p="Start Reactor" t="Include">
+            <e p="StartReactorController.cs" t="Include" />
+          </e>
+          <e p="Submit Scan" t="Include">
+            <e p="FingerPrintScanController.cs" t="Include" />
+          </e>
+          <e p="Swipe Card" t="Include">
+            <e p="SwipeCardController.cs" t="Include" />
+          </e>
+        </e>
+        <e p="Server.cs" t="Include" />
+        <e p="ShieldPanel.cs" t="Include" />
+        <e p="SimplePixelUI" t="Include">
+          <e p="fonts" t="Include">
+            <e p="Font1" t="Include">
+              <e p="license.txt" t="Include" />
+              <e p="readme.txt" t="Include" />
+            </e>
+            <e p="Font2" t="Include">
+              <e p="license.txt" t="Include" />
+              <e p="readme.txt" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="StabilizeSteeringController.cs" t="Include" />
+        <e p="StationController.cs" t="Include" />
+        <e p="TaskAdder.cs" t="Include" />
+        <e p="TitleController.cs" t="Include" />
+        <e p="Todo.txt" t="Include" />
+        <e p="UnlockManifoldsController.cs" t="Include" />
+        <e p="Visuals" t="Include">
+          <e p="VisualsUpdater.cs" t="Include" />
+        </e>
+        <e p="WallSetter.cs" t="Include" />
+      </e>
+      <e p="Library" t="ExcludeRecursive" />
+      <e p="Temp" t="ExcludeRecursive">
+        <e p="bin" t="ExcludeRecursive" />
+      </e>
+      <e p="obj" t="ExcludeRecursive" />
+      <e p="packages" t="ExcludeRecursive" />
+    </e>
+  </component>
+</project>

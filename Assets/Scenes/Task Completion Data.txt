@@ -1,0 +1,14 @@
+Chart Course - Done
+Clear Asteroids - Done
+Download Data - Done Needs Testing
+Empty Garbage - Done
+Fill Tank - Not Done
+Fix Wiring - Done
+Get Fuel - Not Done
+Prime Shields - Done Needs Testing
+Stabilize Steering - Done Needs Testing
+Start Reactor - Done
+Submit Scan - Done
+Swipe Card - Done
+Unlock Manifolds - Done
+Upload Data - Done Needs Testing

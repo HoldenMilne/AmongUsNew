@@ -1,0 +1,4 @@
+#Thu Jan 28 18:05:39 PST 2021
+base.0=/mnt/Navi/Workspaces/Other/Unity/AmongUsRedo/Builds/Android/Export/project/launcher/build/intermediates/transforms/dexMerger/debug/0
+path.0=classes.dex
+renamed.0=classes.dex
