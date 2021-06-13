@@ -10,6 +10,7 @@ using System.Threading;
 using DefaultNamespace.IP;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Android;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Networking;
@@ -46,15 +47,26 @@ public class GameController : MonoBehaviour
     {
         Application.runInBackground = true;
         DontDestroyOnLoad(gameObject);
+        //if (!Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead))
+/*#if UNITY_ANDROID
+        {
+            Permission.RequestUserPermission(Permission.ExternalStorageRead);
+        }
+        new Action(() => {
+            var permission = Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead);
+            if (permission)
+            {
+                Permission.RequestUserPermission(Permission.ExternalStorageRead);
+            }
+        }).Invoke();
+#endif//*/
+        //SendActivity.PluginClass.CallStatic("Run");
         
         if (popupImage != null)
         {
-            DontDestroyOnLoad(popupImage.gameObject);
             DontDestroyOnLoad(popupImage.transform.parent.gameObject);
         }
 
-        if (popupText != null)
-            DontDestroyOnLoad(popupText.gameObject);
         if(reportCanvas!=null)
             DontDestroyOnLoad(reportCanvas);
         if(winPanel!=null)
@@ -179,6 +191,8 @@ public class GameController : MonoBehaviour
     public IEnumerator ConnectCo()
     {
         yield return null;
+        
+        
         //StartCoroutine(co());
         ip = null;
         port = 0;
@@ -187,25 +201,71 @@ public class GameController : MonoBehaviour
         try
         {
             string gameCode = gameCodeTextBox.text.ToUpper();
-            Debug.Log("GameCode:"+gameCode);
-    
-            int[] ints = IPCoder.codeToBytes(gameCode,DateTime.Now);
-            
-            byte[] ips = IPCoder.getIP();
-            Debug.Log(ips[0]+"."+ips[1]+"."+((ints[0]&(127<<8))>>8)+"."+(ints[0]&(127)));
+
+            if (gameCode.StartsWith("_DEBUG_"))
+            {
+                var g = gameCode.Substring("_DEBUG_".Length);
+                Debug.Log(g);
+                switch (g)
+                {
+                    case "AST":
+                    case "ASTEROIDS":
+                        LoadScene("Clear Asteroids");
+                        break;
+                    case "CHART":
+                    case "CHT":
+                        LoadScene("Chart Course");
+                        break;
+                    case "DOWN":
+                    case "DOWNLOAD":
+                        LoadScene("Download Data");//RemoveAssetOptions this later
+                        break;
+                }
+                
+            }
+            else if (gameCode.Contains(".") && gameCode.Contains(":"))
+            {
+                var spl = gameCode.Split(':');
+                var spl2 = spl[0].Split('.');
+
+                ip = new IPAddress(new byte[]
+                {
+                    Convert.ToByte(spl2[0]), Convert.ToByte(spl2[1]),
+                    Convert.ToByte(spl2[2]), Convert.ToByte(spl2[3])
+                });
+                port = Int32.Parse(spl[1]);
+                
+                AddToDebug(spl[0] + "");
+                AddToDebug(port + "");
+            }
+            else
+            {
+                Debug.Log("GameCode:" + gameCode);
+
+                int[] ints = IPCoder.codeToBytes(gameCode, DateTime.Now);
+
+                byte[] ips = IPCoder.getIP();
+                Debug.Log(ips[0] + "." + ips[1] + "." + ((ints[0] & (127 << 8)) >> 8) + "." + (ints[0] & (127)));
                 AddToDebug(+ips[0] + "." + ips[1] + "." + ((ints[0] & (127 << 8)) >> 8) + "." + (ints[0] & (127)));
-    
-            //StartCoroutine(ShowPopup(ips + ""));
-            ip = new IPAddress(new byte[]{Convert.ToByte(ips[0]),Convert.ToByte(ips[1]),
-                Convert.ToByte(((ints[0]&(127<<8))>>8)),Convert.ToByte((ints[0]&(127)))});
-            port  = ints[1];
-            Debug.Log(port);
-            AddToDebug(port+"");}
+
+                //StartCoroutine(ShowPopup(ips + ""));
+                ip = new IPAddress(new byte[]
+                {
+                    Convert.ToByte(ips[0]), Convert.ToByte(ips[1]),
+                    Convert.ToByte(((ints[0] & (127 << 8)) >> 8)), Convert.ToByte((ints[0] & (127)))
+                });
+                port = ints[1];
+                Debug.Log(port);
+                AddToDebug(port + "");
+            }
+        }
+
         catch (Exception e)
         {
-            AddToDebug(ip+":"+port);
+            AddToDebug(ip + ":" + port);
             AddToDebug(e.InnerException?.Message ?? "" + " : " + e.Message + " " + e.Source);
 
+            //connectingCover.enabled=true;
             yield break;
         }
 
@@ -219,6 +279,7 @@ public class GameController : MonoBehaviour
             AddToDebug(ip+":"+port);
             AddToDebug(e.InnerException?.Message ?? "" + " : " + e.Message + " " + e.Source);
     
+            //connectingCover.enabled=true;
             yield break;
         }
         
@@ -234,21 +295,31 @@ public class GameController : MonoBehaviour
         //StartCoroutine(ShowPopup(s));
         
         ghostsUseStationCode = checkbox.isOn;
+        try
+        {
+            SendActivity.StartActivity(nameTextBox.text);
+            SendToServer(nameTextBox.text);
+            // Receive the response from the remote device.  
+            RecieveTasks();
+
+            LoadScene("TaskListScene"); //RemoveAssetOptions this later
+        }
+        catch (Exception e)
+        {
+            AddToDebug(e.Message);
+            AddToDebug(SendActivity.activityName);
+            Debug.Log(e.StackTrace);
+            //connectingCover.enabled=true;
+        }
         
-        SendToServer(nameTextBox.text);
-       
-        
-        // Receive the response from the remote device.  
-        RecieveTasks();
-        
-        LoadScene("TaskListScene");//RemoveAssetOptions this later
         
     }
 
-    private void AddToDebug(string s)
+    public void AddToDebug(string s)
     {
         String st = debug.text;
-        debug.text = s + "\n" + st;
+        var now = System.DateTime.Now;
+        debug.text = now.Hour+":"+now.Minute+":"+now.Second+": "+s + "\n" + st;
     }
 
     public Canvas connectingCover;
@@ -413,10 +484,15 @@ public class GameController : MonoBehaviour
         Debug.Log("Sending Messgae:"+s);
         // Encode the data string into a byte array.  
         byte[] msg = Encoding.ASCII.GetBytes(s+"\n");
-  
-        // Send the data through the socket.  
-        int bytesSent = client.Send(msg);
-         
+
+        try
+        {
+            // Send the data through the socket.  
+            int bytesSent = client.Send(msg);
+        }
+        catch (Exception e)
+        {
+        }
 
     }
 
@@ -507,7 +583,11 @@ public class GameController : MonoBehaviour
     {
         SendToServer(EXIT_CODE);
         //client.Shutdown(SocketShutdown.Both);
-        client.Close();
+        try
+        {
+            client.Close();
+        }
+        catch(Exception e){}
     }
     
     private void OnApplicationQuit()
@@ -760,6 +840,17 @@ public class GameController : MonoBehaviour
         AwaitResponse();
         
     }
+
+    private void getFIles()
+    {
+        
+    }
+
+    protected virtual void ReturnToMenu()
+    {
+        SceneManager.LoadScene("Intro Scene");
+    }
+
 }
 
 

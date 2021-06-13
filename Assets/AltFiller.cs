@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Mirror;
 using UnityEngine;
 
 public class AltFiller : MonoBehaviour
@@ -15,6 +16,7 @@ public class AltFiller : MonoBehaviour
     {
         rect = GetComponent<RectTransform>();
         initSize = rect.sizeDelta.y;
+        
     }
 
     // Update is called once per frame

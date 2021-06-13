@@ -33,6 +33,7 @@ namespace DefaultNamespace.IP
                         {
                             p1+=36;
                         }
+                        Debug.Log(i+":"+p1);
                         break;
                     case 1:
                     case 5:
@@ -42,6 +43,7 @@ namespace DefaultNamespace.IP
                         {
                             p2+=36;
                         }
+                        Debug.Log(i+":"+p2);
                         break;
 
                     case 2:
@@ -50,6 +52,7 @@ namespace DefaultNamespace.IP
                         {
                             p3+=36;
                         }
+                        Debug.Log("2"+":"+p3);
                         break;
                     case 3:
                         p4 = ind -D[1]-D[2];
@@ -58,6 +61,7 @@ namespace DefaultNamespace.IP
                             p4+=36;
                         }
 //i4+d2+d3
+                        Debug.Log("3"+":"+p4);
                         ip=(p1<<12)|(p2<<8)|(p3<<4)|p4;
 
                         break;
@@ -67,8 +71,13 @@ namespace DefaultNamespace.IP
                         {
                             p3+=36;
                         }
+                        Debug.Log("6"+":"+p3);
+                        Debug.Log("6"+"d0:"+D[0]);
+                        Debug.Log("6"+"d1:"+D[1]);
+                        Debug.Log("6"+"d2:"+D[2]);
                         
                         port=(p1<<11)|(p2<<5)|p3;
+                        Debug.Log("6"+":"+port);
                         break;
 
                 }
@@ -94,6 +103,7 @@ namespace DefaultNamespace.IP
                 d2-=1;
                 if(d3==0)
                     d3 = (int) DayOfWeek.Saturday+1;
+                else d3 -= 1;
             }
             Debug.Log(d+" < "+d2+  " <" + d3);
 

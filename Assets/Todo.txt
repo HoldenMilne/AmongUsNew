@@ -1,1 +1,2 @@
-So, it looks like the client/server architecture here won't work.  I'll need to port everything over to using unity sockets.  SHouldn't be too bad, it's just the client.
+On station start: REQUEST ROOMS and load into dropdown
+Closing client before connection causes issue (error)

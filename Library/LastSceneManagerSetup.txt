@@ -1,5 +1,9 @@
 sceneSetups:
-- path: Assets/Scenes/Empty Garbage.unity
+- path: Assets/Scenes/Intro Scene.unity
   isLoaded: 1
   isActive: 1
+  isSubScene: 0
+- path: Assets/StationsAndHubs/Scenes/Room.unity
+  isLoaded: 0
+  isActive: 0
   isSubScene: 0

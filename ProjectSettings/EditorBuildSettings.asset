@@ -6,8 +6,14 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/StationsAndHubs/Scenes/PCIntroScene.unity
+    guid: 90153a6437bbcbbc5a4c2ea459b13c1e
+  - enabled: 1
     path: Assets/Scenes/Intro Scene.unity
     guid: 96ecaee10382b861c9fd1cc1605494b2
+  - enabled: 1
+    path: Assets/StationsAndHubs/Scenes/Room.unity
+    guid: 48950b99af4bd19f1953900ae32c7ecd
   - enabled: 1
     path: Assets/Scenes/Chart Course.unity
     guid: 004eed7359c8223358a4cb218e0da48a
@@ -59,4 +65,13 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Upload Data.unity
     guid: 916ffe1792e41ad32a8c06d11f906235
+  - enabled: 1
+    path: Assets/StationsAndHubs/Scenes/Disconnected.unity
+    guid: 8559da7a60bda1cf889a8e7b6bc3bf48
+  - enabled: 1
+    path: Assets/StationsAndHubs/Scenes/ClientRoom.unity
+    guid: 4c8fe9e904c3175619803ed267f91693
+  - enabled: 1
+    path: Assets/StationsAndHubs/Scenes/StationRoom.unity
+    guid: e93d77e42a31d6cd8bf39f77e258db33
   m_configObjects: {}
