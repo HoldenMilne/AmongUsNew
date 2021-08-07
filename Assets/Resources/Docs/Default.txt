@@ -1,0 +1,82 @@
+# Note: If editing this file manually,
+#       the spaces in the separator
+#       are necessary! (, ) as is the
+#       "NUL" text in the next task
+#       column.
+#
+# It is important to classify your tasks correctly.  For example,
+# Get Fuel has 4 Parts, DLT1,DLT2,DLT3 and DLT4, and the order matters.
+# It always goes DLT1->DLT3->DLT2->DLT4.  If the computer decided which
+# to start with based on the name, then either DLT1 or DLT2 could be
+# selected as the starting task.  This would give 2 version DLT1->DLT3->DLT2->DLT4
+# or DLT2->DLT4, which is not what we want.  Instead, anything marked as a
+# "Chain Task" cannot be selected as a starting task.  I could have made it so that
+# only "NUL" tasks could be selected as starting, but when I designed this early on,
+# I hadn't yet though about how to signify that 2 tasks were meant to be chained.
+# I genuinely thought about using a state number controlled on the phone side.
+# This gave less versatility.  Maybe I wanted Fix Wriring to chain into Swipe card.
+# I can do that this way, but I wouldn't be able to the other way.  When I added this
+# approach it was long after classifying and selecting based on the Short/Long task label
+# and so it has stayed.  Be careful with that.
+#
+# It's best to go through and think about which of the tasks are going to chain, before assigning
+# which tasks chain to what.  Then after selecting you "Chain Tasks" assign all of the tasks
+# that have "Chain Task, NUL" to have some sort of next task column value.
+#
+# Once I get the builder together it's probably better to use that...
+#
+# code, name, location, type, next task
+DST1, Swipe Card, Coffee Nook, Short Task, NUL
+DLT1, Get Fuel, Front Entry, Long Task, DLT3
+DLT2, Get Fuel, Front Entry, Chain Task, DLT4
+DLT3, Fill Tank, Funk Lounge, Chain Task, DLT2
+DLT4, Fill Tank, Laundry Room, Chain Task, NUL
+DST2, Fix Wiring, Funk Lounge, Short Task, DST34
+DST30, Fix Wiring, Funk Lounge, Chain Task, DST37
+DST31, Fix Wiring, Funk Lounge, Chain Task, NUL
+DST3, Fix Wiring, Laundry Room, Short Task, DST30
+DST32, Fix Wiring, Laundry Room, Chain Task, DST31
+DST33, Fix Wiring, Laundry Room, Chain Task, NUL
+DST4, Fix Wiring, Guest Room 1, Short Task, DST40
+DST34, Fix Wiring, Guest Room 1, Chain Task, DST39
+DST35, Fix Wiring, Guest Room 1, Chain Task, NUL
+DST5, Fix Wiring, Guest Room 2, Short Task, DST32
+DST36, Fix Wiring, Guest Room 2, Chain Task, DST41
+DST37, Fix Wiring, Guest Room 2, Chain Task, NUL
+DST6, Fix Wiring, Corner Lounge, Short Task, DST36
+DST38, Fix Wiring, Corner Lounge, Chain Task, DST35
+DST39, Fix Wiring, Corner Lounge, Chain Task, NUL
+DST7, Fix Wiring, RANDOM ROOM, Short Task, DST42
+DST40, Fix Wiring, RANDOM ROOM, Chain Task, DST43
+DST41, Fix Wiring, RANDOM ROOM, Chain Task, NUL
+DST8, Fix Wiring, Kitchen, Short Task, DST38
+DST42, Fix Wiring, Kitchen, Chain Task, DST33
+DST43, Fix Wiring, Kitchen, Chain Task, NUL
+DST9, Empty Garbage, Kitchen, Short Task, NUL
+DST10, Empty Garbage, Laundry Room, Short Task, NUL
+DST11, Empty Garbage, RANDOM ROOM, Short Task, NUL
+DST12, Empty Garbage, Guest Room 2, Short Task, NUL
+DST13, Empty Garbage, Bathroom 1, Short Task, NUL
+DST14, Empty Garbage, Bathroom 2, Short Task, NUL
+DST15, Upload Data, Corner Lounge, Short Task, DLT16
+DST16, Download Data, Dining Room, Chain Task, NUL
+DST17, Upload Data, Guest Room 1, Short Task, DLT18
+DST18, Download Data, Front Entry, Chain Task, NUL
+DST19, Upload Data, Guest Room 2, Short Task, DLT20
+DST20, Download Data, Front Entry, Chain Task, NUL
+DST21, Upload Data, Guest Room 2, Short Task, DLT22
+DST22, Download Data, Front Entry, Chain Task, NUL
+DLT11, Start Reactor, RANDOM ROOM, Long Task, NUL
+DLT12, Start Reactor, Guest Room 2, Long Task, NUL
+DLT17, Start Reactor, Guest Room 1, Long Task, NUL
+DLT13, Start Reactor, Laundry Room, Long Task, NUL
+DLT14, Submit Scan, Bathroom 1, Long Task, NUL
+DLT15, Submit Scan, Bathroom 2, Long Task, NUL
+DLT16, Clear Asteroids, Corner Lounge, Long Task, NUL
+DST23, Prime Shields, Corner Lounge, Short Task, NUL
+DST24, Stabilize Steering, Dining Room, Short Task, NUL
+DST25, Stabilize Steering, Front Entry, Short Task, NUL
+DST26, Unlock Manifolds, Funk Lounge, Short Task, NUL
+DST27, Unlock Manifolds, RANDOM ROOM, Short Task, NUL
+DST28, Unlock Manifolds, Laundry Room, Short Task, NUL
+DST29, Chart Course, Funk Lounge, Short Task, NUL

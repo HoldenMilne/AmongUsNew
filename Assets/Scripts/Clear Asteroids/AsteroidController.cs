@@ -31,7 +31,7 @@ public class AsteroidController : MonoBehaviour
         
         CalculateDirection();
         degPerSec = new System.Random().Next(minAngle,maxAngle);
-        pixelsPerSec = (float)(new System.Random().NextDouble()*(maxSpeed-minSpeed)+minSpeed)*Screen.width;
+        pixelsPerSec = (float)(new System.Random().NextDouble()*(maxSpeed-minSpeed)+minSpeed);
         
         start = true;
     }

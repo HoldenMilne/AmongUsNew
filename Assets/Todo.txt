@@ -1,1 +1,12 @@
-So, it looks like the client/server architecture here won't work.  I'll need to port everything over to using unity sockets.  SHouldn't be too bad, it's just the client.
+[x] - Some reason "Start Game" only works 80% of the time.
+
+[x] -  We now are properly delievering game tasks (locations and what not).  Filtering should probably happen before sending the data to limit data transfer.  That use locations to filter tasks and then send the list of tasks or even the correct number of randomized tasks.
+
+[x] - We also need to fix the thing where the station drop down is getting a non-unique list of locations.
+
+[] - GameController is still trying to communicate with the Java server.  Must comm with the mirror server.
+
+----------------------------
+[x] review above
+
+[] crewmates win on task is stupid buggy... Make sure it is reset compoleted task count on start game.  But also imposters might be automatically winning for crew on task complete?

@@ -8,57 +8,78 @@ using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading;
 using DefaultNamespace.IP;
+using Mirror;
+using StationsAndHubs.Scripts;
+using StationsAndHubs.Scripts.GameTasks;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Android;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 
 public class GameController : MonoBehaviour
 {
-
+    
+    //TODO: May want to rewrite completely
     public bool isDead;
     public Text gameCodeTextBox;
     public Text nameTextBox;
 
-    private Socket client;
+    private PlayerData client;
     //private TcpClient client;
 
     public Canvas reportCanvas;
     public Canvas winPanel;
+    public Canvas imposterWinPanel;
     public Text winPanelText;
     public Canvas endPanel;
     public Text endPanelText;
 
     public Image blackOut;
     Dictionary<string,string> taskMap = new Dictionary<string, string>();
-    public List<Task> tasks = new List<Task>();
+    public List<GameTask> tasks = new List<GameTask>();
     public const string EXIT_CODE = "__EXIT2617__";
     private const string MAIN_SCENE_KEY = "Main";
 
-    public Task currentTask;
+    public GameTask currentTask;
 
     [HideInInspector] public bool ghostsUseStationCode=true;
 
+    public PlayerData playerData;
     public Toggle checkbox;
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
+        singleton = this;
         Application.runInBackground = true;
         DontDestroyOnLoad(gameObject);
+        //if (!Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead))
+/*#if UNITY_ANDROID
+        {
+            Permission.RequestUserPermission(Permission.ExternalStorageRead);
+        }
+        new Action(() => {
+            var permission = Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead);
+            if (permission)
+            {
+                Permission.RequestUserPermission(Permission.ExternalStorageRead);
+            }
+        }).Invoke();
+#endif//*/
+        //SendActivity.PluginClass.CallStatic("Run");
         
         if (popupImage != null)
         {
-            DontDestroyOnLoad(popupImage.gameObject);
             DontDestroyOnLoad(popupImage.transform.parent.gameObject);
         }
 
-        if (popupText != null)
-            DontDestroyOnLoad(popupText.gameObject);
         if(reportCanvas!=null)
             DontDestroyOnLoad(reportCanvas);
         if(winPanel!=null)
             DontDestroyOnLoad(winPanel);
+        if(imposterWinPanel!=null)
+            DontDestroyOnLoad(imposterWinPanel);
         if(endPanel!=null)
             DontDestroyOnLoad(endPanel);
         if (gameCodeTextBox == null)
@@ -69,7 +90,8 @@ public class GameController : MonoBehaviour
         if(checkbox!=null)
             ghostsUseStationCode = checkbox.isOn;
         LoadTaskMap();
-        
+
+        //playerData = PlayerData.FindLocalPlayer();
     }
 
     private void LoadTaskMap()
@@ -169,6 +191,7 @@ public class GameController : MonoBehaviour
     private int port;
     private bool closePop = false;
 
+    //TODO: This will likely be dead
     public void Connect()
     {
         connectingCover.enabled=true;
@@ -176,9 +199,12 @@ public class GameController : MonoBehaviour
     }
     
     
+    //TODO: This will likely be dead
     public IEnumerator ConnectCo()
     {
         yield return null;
+        /*
+        
         //StartCoroutine(co());
         ip = null;
         port = 0;
@@ -187,25 +213,71 @@ public class GameController : MonoBehaviour
         try
         {
             string gameCode = gameCodeTextBox.text.ToUpper();
-            Debug.Log("GameCode:"+gameCode);
-    
-            int[] ints = IPCoder.codeToBytes(gameCode,DateTime.Now);
-            
-            byte[] ips = IPCoder.getIP();
-            Debug.Log(ips[0]+"."+ips[1]+"."+((ints[0]&(127<<8))>>8)+"."+(ints[0]&(127)));
+
+            if (gameCode.StartsWith("_DEBUG_"))
+            {
+                var g = gameCode.Substring("_DEBUG_".Length);
+                Debug.Log(g);
+                switch (g)
+                {
+                    case "AST":
+                    case "ASTEROIDS":
+                        LoadScene("Clear Asteroids");
+                        break;
+                    case "CHART":
+                    case "CHT":
+                        LoadScene("Chart Course");
+                        break;
+                    case "DOWN":
+                    case "DOWNLOAD":
+                        LoadScene("Download Data");//RemoveAssetOptions this later
+                        break;
+                }
+                
+            }
+            else if (gameCode.Contains(".") && gameCode.Contains(":"))
+            {
+                var spl = gameCode.Split(':');
+                var spl2 = spl[0].Split('.');
+
+                ip = new IPAddress(new byte[]
+                {
+                    Convert.ToByte(spl2[0]), Convert.ToByte(spl2[1]),
+                    Convert.ToByte(spl2[2]), Convert.ToByte(spl2[3])
+                });
+                port = Int32.Parse(spl[1]);
+                
+                AddToDebug(spl[0] + "");
+                AddToDebug(port + "");
+            }
+            else
+            {
+                Debug.Log("GameCode:" + gameCode);
+
+                int[] ints = IPCoder.codeToBytes(gameCode, DateTime.Now);
+
+                byte[] ips = IPCoder.getIP();
+                Debug.Log(ips[0] + "." + ips[1] + "." + ((ints[0] & (127 << 8)) >> 8) + "." + (ints[0] & (127)));
                 AddToDebug(+ips[0] + "." + ips[1] + "." + ((ints[0] & (127 << 8)) >> 8) + "." + (ints[0] & (127)));
-    
-            //StartCoroutine(ShowPopup(ips + ""));
-            ip = new IPAddress(new byte[]{Convert.ToByte(ips[0]),Convert.ToByte(ips[1]),
-                Convert.ToByte(((ints[0]&(127<<8))>>8)),Convert.ToByte((ints[0]&(127)))});
-            port  = ints[1];
-            Debug.Log(port);
-            AddToDebug(port+"");}
+
+                //StartCoroutine(ShowPopup(ips + ""));
+                ip = new IPAddress(new byte[]
+                {
+                    Convert.ToByte(ips[0]), Convert.ToByte(ips[1]),
+                    Convert.ToByte(((ints[0] & (127 << 8)) >> 8)), Convert.ToByte((ints[0] & (127)))
+                });
+                port = ints[1];
+                Debug.Log(port);
+                AddToDebug(port + "");
+            }
+        }
+
         catch (Exception e)
         {
-            AddToDebug(ip+":"+port);
+            AddToDebug(ip + ":" + port);
             AddToDebug(e.InnerException?.Message ?? "" + " : " + e.Message + " " + e.Source);
 
+            //connectingCover.enabled=true;
             yield break;
         }
 
@@ -219,6 +291,7 @@ public class GameController : MonoBehaviour
             AddToDebug(ip+":"+port);
             AddToDebug(e.InnerException?.Message ?? "" + " : " + e.Message + " " + e.Source);
     
+            //connectingCover.enabled=true;
             yield break;
         }
         
@@ -234,26 +307,39 @@ public class GameController : MonoBehaviour
         //StartCoroutine(ShowPopup(s));
         
         ghostsUseStationCode = checkbox.isOn;
+        try
+        {
+            SendActivity.StartActivity(nameTextBox.text);
+            SendToServer(nameTextBox.text);
+            // Receive the response from the remote device.  
+            RecieveTasks();
+
+            LoadScene("TaskListScene"); //RemoveAssetOptions this later
+        }
+        catch (Exception e)
+        {
+            AddToDebug(e.Message);
+            AddToDebug(SendActivity.activityName);
+            Debug.Log(e.StackTrace);
+            //connectingCover.enabled=true;
+        }
         
-        SendToServer(nameTextBox.text);
-       
-        
-        // Receive the response from the remote device.  
-        RecieveTasks();
-        
-        LoadScene("TaskListScene");//RemoveAssetOptions this later
-        
+        */
     }
 
-    private void AddToDebug(string s)
+    public void AddToDebug(string s)
     {
         String st = debug.text;
-        debug.text = s + "\n" + st;
+        var now = System.DateTime.Now;
+        debug.text = now.Hour+":"+now.Minute+":"+now.Second+": "+s + "\n" + st;
     }
 
     public Canvas connectingCover;
+    
+    //TODO: This will likely be dead
     private void OpenClient(IPAddress ip, int port)
     {
+        /*
         // open client
         client = new Socket(ip.AddressFamily,
             SocketType.Stream, ProtocolType.Tcp );  
@@ -280,11 +366,13 @@ public class GameController : MonoBehaviour
         
         Debug.Log("DONE");
         
-        // 
+        // */
     }
 
+    //TODO: This will likely be dead
     private void RecieveTasksx()
     {
+        /*
         Debug.Log("RECIEVE");
         if(this.tasks.Count>0)this.tasks.Clear();
         if (!socketReady)
@@ -306,11 +394,13 @@ public class GameController : MonoBehaviour
             {
                 this.tasks.Add(ParseTask(t));
             }
-        }
+        }*/
     }
 
+    //TODO: This will likely be dead
     private void RecieveTasks()
     {
+        /*
         Debug.Log("Getting Tasks");
         if(this.tasks.Count>0)this.tasks.Clear();
         
@@ -325,23 +415,32 @@ public class GameController : MonoBehaviour
         foreach (var t in tasks)
         {
             this.tasks.Add(ParseTask(t));
-        }
+        }*/
     }
 
-    private Task ParseTask(string t)
+    private GameTask ParseTask(string t)
     {
         
         Debug.Log(t);
         string[] t_data = t.Split(':');
-        Task T = new Task(t_data[0],t_data[1],t_data[2]);
+        GameTask T = GameTaskFactory.create(t_data[0],t_data[1],t_data[2],t_data[3],t_data[4]);
         Debug.Log(T);
         return T;
     }
 
+    /*
+     * TODO:
+     * This function should be simply "SendToServer" as a command.
+     * Then, the server should make the "AwaitResponse" into a callback as "TellLocation" Target RPC
+     * That "TellLocation" RPC should do the rest of the code with LoadScene and what not.
+     */
     public bool RequestLocationName(string s)
     {
         if (winPanel.enabled) return true;
-        SendToServer("LOC--"+s); // tell the server the station code
+        if (client == null)
+            client = FindClient();
+        if (client == null) return true;
+        client.SendToServer("LOC--"+s); // tell the server the station code
         string resp = AwaitResponse(); // server tells you the name of that location
         Debug.Log(resp+"<<");
         foreach (var task in tasks)
@@ -352,13 +451,25 @@ public class GameController : MonoBehaviour
                                                                    task.name.Equals("Swipe Card", StringComparison.InvariantCultureIgnoreCase)||
                 task.name.Equals("Clear Asteroids", StringComparison.InvariantCultureIgnoreCase))) // find the first incomplete task at that location.
             */{
+                Debug.Log("WHAT");
                 currentTask = task;
+                //client.UpdatePlayerLocation(client.connId,resp);
                 LoadScene(task.name);
                 return true;
             }
         }
         return false;
 
+    }
+
+    private PlayerData FindClient()
+    {
+        foreach (var pd in FindObjectsOfType<PlayerData>())
+        {
+            if (pd.isLocalPlayer) return pd;
+        }
+
+        return null;
     }
 
     private string lastScene = "Intro Scene";
@@ -390,12 +501,14 @@ public class GameController : MonoBehaviour
 
     private string AwaitResponse()
     {
+        return "";
+        /*
         byte[] bytes = new byte[1024];  
         
         int bytesRec = client.Receive(bytes); 
         return Encoding.ASCII.GetString(bytes,0,bytesRec);
         
-        //return ""; // remove this later
+        //return ""; // remove this later*/
     }
 
     public void SendToServerx(string s)
@@ -407,81 +520,33 @@ public class GameController : MonoBehaviour
         writer.Flush();
     }
 
+    /*
+     * TODO: SendToServer should become a [command], and that should call a function callback
+     * TODO: Each call to SendToServer must be a different [command]
+     */
     public void SendToServer(string s)
     {
         
         Debug.Log("Sending Messgae:"+s);
         // Encode the data string into a byte array.  
         byte[] msg = Encoding.ASCII.GetBytes(s+"\n");
-  
-        // Send the data through the socket.  
-        int bytesSent = client.Send(msg);
-         
+
+        try
+        {
+            // Send the data through the socket.  
+            PlayerData bytesSent = client;
+        }
+        catch (Exception e)
+        {Debug.Log("Send to server error.");
+        }
 
     }
 
     public void AlertToJobSucess(string s)
     {
-        SendToServer("Complete--"+s);
+        client.TaskComplete("Complete--"+s);
         // get main scene and load
-        var v = AwaitResponse(); // TODO: use this to get next task if chain
-        currentTask.isComplete = true;
-        if (!v.Equals("nul", StringComparison.InvariantCultureIgnoreCase) && !v.Equals("win", StringComparison.InvariantCultureIgnoreCase))
-        {
-            
-            Debug.Log("NOT NUL");
-            Task t = ParseTask(v);
-            Task remove = null;
-            foreach (var T in tasks)
-            {
-                if (T.name.StartsWith(s, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    remove = T;
-                    break;
-                }
-            }
-
-            if (remove != null)
-            {
-                tasks.Remove(remove);
-                tasks.Add(t);
-            }
-            else
-            {
-                foreach (var tas in tasks)
-                {
-                    if (tas.name.Equals(currentTask.name))
-                    {
-                        Debug.Log("TASK MATCH -- "+tas);
-                        tas.isComplete = true;
-                        break;
-                    }
-                }
-            }
-        }
-        else
-        {
-            foreach (var tas in tasks)
-            {
-                if (tas.name.Equals(currentTask.name))
-                {
-                    Debug.Log("TASK MATCH -- "+tas);
-                    tas.isComplete = true;
-                    break;
-                }
-            }
-
-            
-        } // test with GR1, CL, Funk station (fix wiring)
-
-        string scene = "TaskListScene";
-        LoadScene(scene);
-        if (v.Equals("win", StringComparison.InvariantCultureIgnoreCase))
-        {
-
-            StartCoroutine(Delay(.5f, OpenWinPanel));
-            
-        }
+       
     }
 
     IEnumerator Delay(float f, Action func)
@@ -490,9 +555,13 @@ public class GameController : MonoBehaviour
         func();
     }
     
-    private void OpenWinPanel()
+    public void OpenWinPanel()
     {
         winPanel.enabled = true; // on start, close panel, reload game settings.
+    }
+    public void OpenIWinPanel()
+    {
+        imposterWinPanel.enabled = true; // on start, close panel, reload game settings.
     }
 
     public void Closex()
@@ -500,14 +569,18 @@ public class GameController : MonoBehaviour
         
         SendToServer(EXIT_CODE);
         //client.Shutdown(SocketShutdown.Both);
-        client.Close();
+        //client.Close();
     }
 
     public void Close()
     {
         SendToServer(EXIT_CODE);
         //client.Shutdown(SocketShutdown.Both);
-        client.Close();
+        try
+        {
+            //client.Close();
+        }
+        catch(Exception e){}
     }
     
     private void OnApplicationQuit()
@@ -524,12 +597,14 @@ public class GameController : MonoBehaviour
         
         if (report)
         {
-            AlertToJobSucess(currentTask.name);
+            AlertToJobSucess(currentTask.id);
         }
         else
         {
-            AlertToJobSucess(currentTask.name+"-NOREPORT");
+            AlertToJobSucess(currentTask.id+"-NOREPORT");
         }
+
+        client.UpdatePlayerLocation(client.connId,"Unknown");
         reportCanvas.enabled = false;
         text.enabled = false;
         blackOut.enabled = false;
@@ -682,8 +757,8 @@ public class GameController : MonoBehaviour
 
     public void WinPanelOnClick()
     {
-        if(!winPanelCoOn)
-            StartCoroutine(WinPanelCoroutine());
+        winPanel.enabled = false;
+        imposterWinPanel.enabled = false;
     }
 
     private bool winPanelCoOn = false;
@@ -743,6 +818,8 @@ public class GameController : MonoBehaviour
     private AddressFamily save_ip;
     private int save_port;
     private bool is_paused = false;
+    public static GameController singleton;
+
     private void OnApplicationPause(bool pauseStatus)
     {
         return;
@@ -759,6 +836,145 @@ public class GameController : MonoBehaviour
         OpenClient(ip,port);
         AwaitResponse();
         
+    }
+
+    private void getFIles()
+    {
+        
+    }
+
+    protected virtual void ReturnToMenu()
+    {
+        SceneManager.LoadScene("Intro Scene");
+    }
+
+    // NEW:this is a test
+    public string GetResponse(string s)
+    { 
+        Debug.Log(s+ " RESPONSE");
+        string[] spl = s.Split(new string[]{"--"}, StringSplitOptions.RemoveEmptyEntries);
+        string resp = "NONE--NUL";
+        Debug.Log(spl[0]+ " :: "+spl[1]);
+        switch (spl[0].ToUpper())
+        {
+            case "LOC":
+                LoadTaskGame(spl[1]);
+                client.UpdatePlayerLocation(client.connId,spl[1]);
+                break;
+            case "COMPLETE":
+                Debug.Log("COMPLETE");
+                string x = MarkTaskComplete(spl[1]);
+                
+            break;
+            case "WIN":
+                // ALERT TO WIN!
+                winPanel.enabled = true;
+                break;
+        }
+
+        return resp;
+    }
+
+    private string MarkTaskComplete(string s)
+    {
+        currentTask.isComplete = true;
+        if (!s.Equals("nul", StringComparison.InvariantCultureIgnoreCase) && !s.Equals("win", StringComparison.InvariantCultureIgnoreCase))
+        {
+    
+            Debug.Log("NOT NUL");
+            string[] parts = s.Split(new string[]{">>"},StringSplitOptions.None);
+            s = parts[1];
+            string[] rtask = parts[0].Split(':');
+            GameTask remove = GameTask.findGameTaskByID(rtask[1]);
+            Debug.Log("PARTS");
+            Debug.Log(remove);
+            Debug.Log(parts[0]);
+            GameTask t = ParseTask(s);
+            if(remove==null) // try finding by name
+                foreach (var T in tasks)
+                {
+                    if (T.name.StartsWith(rtask[0], StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        remove = T;
+                        break;
+                    }
+                }
+
+            if (remove != null)
+            {
+                tasks.Remove(remove);
+                tasks.Add(t);
+            }
+            else
+            {
+                foreach (var tas in tasks)
+                {
+                    if (tas.name.Equals(currentTask.name))
+                    {
+                        Debug.Log("TASK MATCH -- "+tas);
+                        tas.isComplete = true;
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            foreach (var tas in tasks)
+            {
+                if (tas.name.Equals(currentTask.name))
+                {
+                    Debug.Log("TASK MATCH -- "+tas);
+                    tas.isComplete = true;
+                    break;
+                }
+            }
+
+    
+        } // test with GR1, CL, Funk station (fix wiring)
+
+        if (playerData == null)
+        {
+            Debug.Log("NULL DATA");
+            playerData = PlayerData.FindLocalPlayer();
+            //playerData = PlayerData.FindLocalPlayer();
+        }
+        if (playerData == null) return "ERR--no player data found";
+        
+        playerData.ReloadTaskListScene(tasks);
+        if (s.Equals("win", StringComparison.InvariantCultureIgnoreCase))
+        {
+
+            StartCoroutine(Delay(.5f, OpenWinPanel));
+    
+        }
+         //*/
+         return "";
+    }
+    private void LoadTaskGame(string tname)
+    {
+        foreach (var task in tasks)
+        {
+            Debug.Log("task : " + task.name+ " :loc :" + task.location + "<"+tname);
+            if (task.isComplete || !task.location.Equals(tname,StringComparison.InvariantCultureIgnoreCase)) continue;
+            currentTask = task;
+            LoadScene(task.name);
+            break;
+        }
+    }
+
+    public void Success()
+    {
+        if (AmongUsGoSettings.singleton.assignImposters)
+        {
+            if (playerData == null)
+            {
+                playerData = PlayerData.FindLocalPlayer();
+            }
+            TaskSuccess(!playerData.isImposter);
+        }
+        else
+            reportCanvas.enabled = true;
     }
 }
 
