@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using StationsAndHubs.Scripts;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -27,6 +28,7 @@ public class SoundController : MonoBehaviour
             alarms = Resources.LoadAll<AudioClip>("Alarms");
         if (_bite_source == null)
             _bite_source = GetComponent<AudioSource>();
+        SetAlarm("echo");
     }
 
     public void PlayBite(string _name)

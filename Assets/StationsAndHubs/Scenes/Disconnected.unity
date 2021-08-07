@@ -157,8 +157,11 @@ MonoBehaviour:
   _music_source: {fileID: 0}
   biteVolume: 0.622
   musicVolume: 1
+  alarmVolume: 1
   bites: []
   music: []
+  alarms: []
+  activeAlarm: {fileID: 0}
 --- !u!82 &195681064
 AudioSource:
   m_ObjectHideFlags: 0

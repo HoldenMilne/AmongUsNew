@@ -45,7 +45,8 @@ public class GameCodeGenerator : MonoBehaviour
     {
         var id = conn.networkAddress;
         var gc = MakeLANCode(id);
-        GetComponent<Text>().text = gc;
+//        GetComponent<Text>().text = gc;
+        GetComponent<Text>().text = CustomNetworkManager.GetLocalIPv4();
     }
 
     private string MakeLANCode(string id)

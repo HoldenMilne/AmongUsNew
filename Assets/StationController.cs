@@ -22,6 +22,11 @@ public class StationController : MonoBehaviour
         
     }
 
+    /*
+     * TODO:
+     * RequestLocationName will no longer return anything in the future, or will always return true.
+     * Maybe make this an error/catch?
+     */
     public void SendStationCode()
     {
         if (gc != null)

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DefaultNamespace.Scripts;
 using Mirror;
 using StationsAndHubs.Scripts.GameTasks;
 using UnityEngine;
@@ -28,10 +29,21 @@ namespace StationsAndHubs.Scripts
         [SyncVar(hook = nameof(UpdateCurrentLocation))]
         public string currentLocation = "Unknown";
         [SyncVar(hook = nameof(UpdateCompletionCount))]
-        int tasksCompleted;
+        public int tasksCompleted;
         [SyncVar]
         public int connId;
+        [SyncVar]
+        public bool isDead;
 
+        [SyncVar(hook = nameof(updateImposter))]
+        public bool isImposter = false; // default crewmate
+        
+        
+        void updateImposter(bool old, bool newVal)
+        {
+            isImposter = newVal;
+            Debug.Log(newVal);
+        }
         [SyncVar(hook = nameof(UpdateReady))]
         public bool ready;
 
@@ -39,6 +51,7 @@ namespace StationsAndHubs.Scripts
 
         public void Awake()
         {
+            DontDestroyOnLoad(gameObject);
             Debug.Log("AWAKE");
             if (isLocalPlayer)
             {
@@ -63,12 +76,19 @@ namespace StationsAndHubs.Scripts
             //if (cnm.stationIdToLocation.ContainsValue(location)) // location exists
             //    return;
             var gc = cnm.GenerateGameCode();
+            //gc = "PLPMGL";
             while (cnm.stationIdToLocation.ContainsKey(gc))
             {
                 gc = cnm.GenerateGameCode();
+                
             }
             cnm.AddNewStation(connId,gc,location);
             TargetSetStationData(gc);
+        }
+        [Command]
+        public void IAmDead()
+        {
+            ((CustomNetworkManager) NetworkManager.singleton).IAmDead(connId);
         }
 
         public void Start()
@@ -130,6 +150,8 @@ namespace StationsAndHubs.Scripts
         void UpdateCurrentLocation(string oldString,string newString)
         {
             currentLocation = newString;
+            lastLocation = oldString;
+            timeOfUpdateLocation = DateTime.Now.ToShortTimeString();
         }
         
         void UpdateCompletionCount(int oldInt,int newInt)
@@ -224,17 +246,19 @@ namespace StationsAndHubs.Scripts
             this.name = playerName;
         }
         
-        
-        public void SetLastLocation(string newString)
+        public void SetCurrentLocation(string newString = "Unknown")
+        {
+            SetLastLocation(currentLocation);
+            currentLocation = newString;
+            timeOfUpdateLocation = DateTime.Now.ToShortTimeString();
+        }
+        public void SetLastLocation(string newString = "Unknown")
         {
             lastLocation = newString;
-        } 
-        
-        public void SetCurrentLocation(string newString)
-        {
-            
-            currentLocation = newString;
         }
+
+        public string timeOfUpdateLocation = "";
+        
         void SetCompletionCount(int i)
         {
             tasksCompleted = i;
@@ -249,8 +273,7 @@ namespace StationsAndHubs.Scripts
         public void Reset()
         {
             SetCompletionCount(0);
-            SetLastLocation("None");
-            SetCurrentLocation("None");
+            currentLocation = "Unknown";
         }
 
         public string GetName()
@@ -258,19 +281,87 @@ namespace StationsAndHubs.Scripts
             return playerName;
         }
 
+        private AsyncOperation sceneLoading;
+        
         [ClientRpc]
-        internal virtual void StartGame(int s,int l,string activeTaskList)
+        internal virtual void StartGame(int s, int l, string[] activeTaskList, string[] locations)
         {
-            Debug.Log(s+ " < " + l +" < "+activeTaskList);
+            if(!isLocalPlayer) return;
+            Debug.Log("StartGame");
+            Debug.Log("SIZE:"+locations.Length);
+            Debug.Log(name + " :: "+ type);
+            if (type == PlayerType.Station) return; // maybe later we do something else
+            if (type == PlayerType.AdminPanel) return; // maybe later we do something else
+            foreach (var st in activeTaskList)
+            {
+                
+                Debug.Log(s+ " < " + l +" < "+st);
+            }
             switch (type)
             {
                 case PlayerType.Player:
-                    tasks = GameTask.getGameTasks(s,l,activeTaskList);
-                    foreach (var VARIABLE in tasks)
+                    Debug.Log("LOCATIONS NOT NULL");
+                    foreach (var loc in locations)
                     {
-                        Debug.Log(playerName+ " : "+VARIABLE);
+                        GameTask.locations.Add(loc);
                     }
-                    SceneManager.LoadScene("TaskListScene");
+                    Debug.Log("Attempt game task load");
+                    GameTask.LoadGameTasksFromArray(activeTaskList, locations);
+                    
+                    sceneLoading=SceneManager.LoadSceneAsync("TaskListScene");
+                    StartCoroutine(OnTaskListSceneLoaded(s,l));
+                    
+                    break;
+                case PlayerType.AdminPanel:
+                    break;
+                // station doesn't really do anything here...
+            }
+        }
+        
+        [TargetRpc]
+        internal virtual void StartGameThin(int s, int l, string[] activeTaskList,bool assignImposters, bool ghostsVisitStations,bool crewWinOnTasks, string[] imposterNames)
+        {
+            var settings = new AmongUsGoSettings
+            {
+                shortTasks = s,
+                longTasks = l,
+                assignImposters = assignImposters,
+                ghostsVisitStations = ghostsVisitStations,
+                crewWinsOnTaskCompletion = crewWinOnTasks
+            };
+
+            AmongUsGoSettings.singleton = settings;
+            Debug.Log("StartGame");
+            Debug.Log(name + " :: "+ type);
+            if (type == PlayerType.Station) return; // maybe later we do something else
+            if (type == PlayerType.AdminPanel) return; // maybe later we do something else
+            if(!isLocalPlayer) 
+                if(GameController.singleton!=null && GameController.singleton.playerData!=null)
+                    GameController.singleton.playerData.StartGameThin(s,l,activeTaskList,assignImposters,ghostsVisitStations,crewWinOnTasks,imposterNames);
+            /*foreach (var st in activeTaskList)
+            {
+                Debug.Log(s+ " < " + l +" < "+st);
+            }//*/
+            switch (type)
+            {
+                case PlayerType.Player:
+                    Debug.Log("LOCATIONS IS NULL");
+                    Debug.Log("< PLAYER TASK LIST >");
+                    var tasks = new List<GameTask>();
+                    this.imposterNames = imposterNames;
+                    foreach (var t in activeTaskList)
+                    {
+                        Debug.Log("TASK: -- "+t);
+                        var task = ParseTask(t); // this uses a different approach since ToString isn't the same as the file format (which is bad)
+                        
+                        tasks.Add(task);
+                    }
+                    Debug.Log("SIZE ?? "+tasks.Count);
+                    firstTaskLoad = true;
+                    
+                    sceneLoading=SceneManager.LoadSceneAsync("TaskListScene");
+                    StartCoroutine(OnTaskListSceneLoaded(tasks,imposterNames));
+                    
                     break;
                 case PlayerType.AdminPanel:
                     break;
@@ -278,6 +369,111 @@ namespace StationsAndHubs.Scripts
             }
         }
 
+        [Command]
+        public void UpdatePlayerLocation(int id, string location)
+        {
+            var pd = ((CustomNetworkManager) NetworkManager.singleton).FindByConnId(id);
+            if (pd != null)
+            {
+                Debug.Log("curLocation"+location);
+                pd.currentLocation = location;
+            }
+            else
+            {
+                Debug.Log("Update Location Failed, player null");
+            }
+        }
+        private GameTask ParseTask(string t)
+        {
+        
+            Debug.Log(t);
+            string[] t_data = t.Split(new string[]{" : "},StringSplitOptions.None);
+            
+            GameTask T = GameTaskFactory.create(t_data[0],t_data[1],t_data[2],t_data[3],t_data[4]);
+            Debug.Log(T);
+            return T;
+        }
+
+        private IEnumerator OnTaskListSceneLoaded(int s,int l)
+        {
+            yield return new WaitUntil(TaskSceneLoaded);
+            
+            var tasks = GameTask.getGameTasksForArray(s,l);
+            var gc = FindObjectOfType<GameController>();
+            gc.tasks = tasks;
+            FindObjectOfType<TaskAdder>().AddTasks();
+        }
+        
+        private IEnumerator OnTaskListSceneLoaded(List<GameTask> tasks,string[] imposterNames)
+        {
+            string iNames = "";
+            if(imposterNames!=null)
+            {
+                bool twoCol = (imposterNames == null ? false : imposterNames.Length > 10);
+                bool left = true;
+                foreach (var n in imposterNames)
+                {
+                    if (n.Equals(playerName)) continue;
+                    if (twoCol)
+                    {
+                        if (left)
+                        {
+                            left = false;
+                            iNames += n + "   ";
+                        }
+                        else
+                        {
+                            left = true;
+                            iNames += n + "\n";
+                        }
+                    }
+                    else
+                    {
+                        iNames += n + "\n";
+                    }
+                }
+
+                if (iNames == "") iNames = "No one :(";
+            }
+            yield return new WaitUntil(TaskSceneLoaded);
+            var playerRoleCanvas = FindObjectOfType<PlayerRoleCanvas>();
+            playerRoleCanvas.Set(isImposter,iNames);
+            if(firstTaskLoad && AmongUsGoSettings.singleton.assignImposters)
+                StartCoroutine(playerRoleCanvas.Show());
+            firstTaskLoad = false;
+            var gc = FindObjectOfType<GameController>();
+            gc.tasks = tasks;
+            FindObjectOfType<TaskAdder>().AddTasks();
+        }
+
+        public void ReloadTaskListScene(List<GameTask> tasks)
+        {
+            FindObjectOfType<GameController>().tasks = tasks;
+            sceneLoading=SceneManager.LoadSceneAsync("TaskListScene");
+            StartCoroutine(OnTaskListSceneLoaded(tasks,imposterNames));
+        }
+
+        public static PlayerData FindLocalPlayer()
+        {
+            foreach (var pd in FindObjectsOfType<PlayerData>())
+            {
+                if (pd.isLocalPlayer) return pd;
+            }
+
+            return null;
+        }
+        private IEnumerator OnTaskListSceneReloaded(List<GameTask> tasks)
+        {
+            yield return new WaitUntil(TaskSceneLoaded);
+            
+            var gc = FindObjectOfType<GameController>();
+            gc.tasks = tasks;
+            FindObjectOfType<TaskAdder>().AddTasks();
+        }
+        public bool TaskSceneLoaded()
+        {
+            return sceneLoading.isDone;
+        }
         public string GetCurrentLocation()
         {
             return currentLocation;
@@ -407,7 +603,113 @@ namespace StationsAndHubs.Scripts
         public void TargetSetStationInitialData(NetworkIdentity conn,string gameCode)
         {
         }
-
         
+        /*
+         * Game Controller stuff
+         */
+
+        [Command]
+        public void TaskComplete(string s)
+        {
+            tasksCompleted = Mathf.Min(tasksCompleted + 1,
+                AmongUsGoSettings.singleton.longTasks + AmongUsGoSettings.singleton.shortTasks);
+            var cnm = ((CustomNetworkManager) NetworkManager.singleton);
+            
+            var resp = cnm.SendToServer(s);
+            if (cnm.CheckWin())
+                resp = "WIN--C";
+            
+            if (!resp.StartsWith("NONE--"))
+                RespondCall(resp);
+        }
+        [Command]
+        public void SendToServer(string s)
+        {
+            
+            var resp = ((CustomNetworkManager)NetworkManager.singleton).SendToServer(s);
+            
+            if (!resp.StartsWith("NONE--"))
+                RespondCall(resp);
+        }
+
+        [TargetRpc]
+        public void RespondCall(string s)
+        {
+            string resp = FindObjectOfType<GameController>().GetResponse(s);
+            if (!resp.StartsWith("NONE--"))
+                SendToServer(resp);
+        }
+
+        [TargetRpc]
+        public void MakeLocalPlayer()
+        {
+            GameController.singleton.playerData = this;
+        }
+
+        private Canvas clientVotingCanvas;
+        private bool firstTaskLoad;
+        private string[] imposterNames;
+
+        [TargetRpc]
+        public void CallVote()
+        {
+            if(!isLocalPlayer) return;
+            
+            // Show the panel
+            if(clientVotingCanvas==null)
+                clientVotingCanvas = GameObject.FindWithTag("ClientVotingCanvas").GetComponent<Canvas>();
+            clientVotingCanvas.enabled = true;
+            
+            ReloadTaskListScene(FindObjectOfType<GameController>().tasks);
+        }
+
+        [TargetRpc]
+        public void AlertToGameEnd()
+        {
+            sceneLoading=SceneManager.LoadSceneAsync("ClientRoom");
+            
+            StartCoroutine(OnClientRoomSceneLoaded());
+            // must update client room with 
+        }
+
+        IEnumerator OnClientRoomSceneLoaded()
+        {
+            yield return new WaitUntil(TaskSceneLoaded);
+            if(clientVotingCanvas!=null)
+                clientVotingCanvas.enabled = false;
+            if (connId != 0)
+            {
+                GameObject.FindWithTag("SetNameCanvas").GetComponent<Canvas>().enabled = false;
+                GameObject.FindWithTag("WaitingForGameCanvas").GetComponent<Canvas>().enabled = true;
+            }
+            // set the correct thing so that the player isn't prompted to enter a name again
+        }
+
+        [TargetRpc]
+        public void ResumeGame()
+        {
+            if(clientVotingCanvas!=null)
+                clientVotingCanvas.enabled = false;
+        }
+
+
+        [TargetRpc]
+        public void ImpostersWin()
+        {
+            FindObjectOfType<GameController>().OpenIWinPanel();
+        }
+
+
+        [TargetRpc]
+        public void CrewmatesWin()
+        {
+            FindObjectOfType<GameController>().OpenWinPanel();
+        }
+
+        [TargetRpc]
+        public void ForceClosedWinPanel()
+        {
+            FindObjectOfType<GameController>().WinPanelOnClick();
+        }
     }
 }

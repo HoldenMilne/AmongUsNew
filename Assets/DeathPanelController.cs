@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using DefaultNamespace.Scripts;
+using Mirror;
+using StationsAndHubs.Scripts;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -47,6 +50,17 @@ public class DeathPanelController : MonoBehaviour
         
     }
 
+    private PlayerRoleCanvas prc;
+    public void RevealRole()
+    {
+        if (prc == null)
+            prc = FindObjectOfType<PlayerRoleCanvas>();
+        Debug.Log(prc);
+        if (prc == null) return;
+        StartCoroutine(prc.Show());
+
+    }
+
     public void ChangePanelState()
     {
         if (isOpen)
@@ -61,7 +75,7 @@ public class DeathPanelController : MonoBehaviour
 
     IEnumerator OpenPanel()
     {
-        if (opening) yield break;
+        StopCoroutine(ClosePanel());
         opening = true;
 
         float a = 0;
@@ -86,7 +100,7 @@ public class DeathPanelController : MonoBehaviour
     
     IEnumerator ClosePanel()
     {
-        if (!opening) yield break;
+        StopCoroutine(OpenPanel());
         opening = false;
 
         float a = 0;
@@ -174,9 +188,13 @@ public class DeathPanelController : MonoBehaviour
         {
             
             Debug.Log("GameController not found...");
+            
         }
+
+        PlayerData.FindLocalPlayer().IAmDead();
     }
 
+    
     public int cooldown =10;
     public int timer = 0;
     public void GameEnd()

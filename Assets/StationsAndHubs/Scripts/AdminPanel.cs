@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Mirror;
 using StationsAndHubs.Scripts;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,9 +14,10 @@ public class AdminPanel : MonoBehaviour
     private CustomNetworkManager cnm;
     public Transform spawnPoint;
     public GameObject scrollView;
+    public GameObject adminDisplayObject;
     public void Start()
     {
-        cnm = GetComponent<CustomNetworkManager>();
+        cnm = ((CustomNetworkManager)NetworkManager.singleton);
         StartCoroutine(UpdatePanel());
     }
 
@@ -39,6 +41,7 @@ public class AdminPanel : MonoBehaviour
 
         
         int i = 0;
+        Debug.Log(cnm.playerNames);
         string[] _sorted = new string[cnm.playerNames.Count];
         cnm.playerNames.CopyTo(_sorted);
         List<string> sorted = new List<string>(_sorted); // Does this work???
@@ -46,17 +49,33 @@ public class AdminPanel : MonoBehaviour
         
         foreach (var p in sorted)
         {
-            var go = GameObject.Instantiate(cnm.playerDisplayObject,spawnPoint.transform) as GameObject;
             var p_obj = cnm.players[p].gameObject.GetComponent<PlayerData>();
-            go.GetComponentInChildren<Text>().text=p+ " : " + p_obj.GetCurrentLocation();
+            if(AmongUsGoSettings.singleton.adminPanelOnlyShowAtStations && p_obj.currentLocation.Equals("Unknown",StringComparison.InvariantCultureIgnoreCase))
+                continue;
+            var go = GameObject.Instantiate(adminDisplayObject,spawnPoint.transform) as GameObject;
+            foreach (var text in go.GetComponentsInChildren<Text>())
+            {
+                switch (text.tag)
+                {
+                    case "adminUnitName":
+                        text.text = p_obj.playerName;
+                        break;
+                    case "adminUnitTime":
+                        text.text = p_obj.timeOfUpdateLocation+"";
+                        break;
+                    case "adminUnitLoc":
+                        text.text = p_obj.GetCurrentLocation();
+                        break;
+                }
+            }
             var anc = go.GetComponent<RectTransform>().anchoredPosition;
             anc.y = - 60 * i;
             i += 1;
             go.GetComponent<RectTransform>().anchoredPosition = anc;
-            
-            var img = go.GetComponent<Image>().color;
+            var imgComp = go.GetComponentInChildren<Image>();
+            var img = imgComp.color;
             img.a = ((i & 1) + 1) * .1f;
-            go.GetComponent<Image>().color = img;
+            imgComp.color = img;
         }
 
         var size = scrollView.GetComponent<RectTransform>().sizeDelta;

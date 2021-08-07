@@ -101,7 +101,7 @@ public class UnlockManifoldsController : MonoBehaviour
         yield return new WaitForSeconds(1f);
 
         Debug.Log("Success");
-        FindObjectOfType<GameController>().reportCanvas.enabled = true;
-        
+        FindObjectOfType<GameController>().Success();
+
     }
 }

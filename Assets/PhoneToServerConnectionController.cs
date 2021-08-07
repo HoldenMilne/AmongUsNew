@@ -30,7 +30,7 @@ public class PhoneToServerConnectionController : MonoBehaviour
             manager = (CustomNetworkManager)NetworkManager.singleton;
         }
         
-        field = GameObject.FindWithTag("nameField").GetComponent<InputField>();
+        //field = GameObject.FindWithTag("nameField").GetComponent<InputField>();
 
     }
 
@@ -38,7 +38,7 @@ public class PhoneToServerConnectionController : MonoBehaviour
     public void OnClick(Text text)
     {
         Debug.Log(c);
-        var playerName = field.text;
+        var playerName = "";
 
         if (false && playerName == "")
         {

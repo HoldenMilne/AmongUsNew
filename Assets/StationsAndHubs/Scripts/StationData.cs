@@ -24,7 +24,6 @@ namespace StationsAndHubs.Scripts
         public new void Start()
         {
             base.Start();
-            RequestStationDataUpdate();
         }
 
         [Command]

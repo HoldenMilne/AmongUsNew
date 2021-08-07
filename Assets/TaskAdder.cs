@@ -18,7 +18,6 @@ public class TaskAdder : MonoBehaviour
     private void Start()
     {
         gc = FindObjectOfType<GameController>();
-        AddTasks();
     }
 
     // Update is called once per frame
@@ -33,11 +32,12 @@ public class TaskAdder : MonoBehaviour
             prefabs = new List<GameObject>();
         float height = -1;
         int counter = 1;
-        
+        Debug.Log("ADDER"+gc.tasks);
         if(gc==null) return;
         
         foreach (var task in gc.tasks)
         {
+            Debug.Log(task.ToString());
             var go = Instantiate(taskPrefab, gameObject.transform);
             var trigger = go.GetComponent<EventTrigger>();
             Text[] texts =  go.GetComponentsInChildren<Text>();

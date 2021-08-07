@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Mirror;
 using StationsAndHubs.Scripts;
 using UnityEngine;
 
@@ -19,7 +20,7 @@ public class StartGameController : MonoBehaviour
 
     public void StartGame()
     {
-        ((CustomNetworkManager)CustomNetworkManager.singleton).StartGame();
+        ((CustomNetworkManager)NetworkManager.singleton).StartGame();
     }
     
 }

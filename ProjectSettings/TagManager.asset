@@ -15,6 +15,10 @@ TagManager:
   - RoomsDropdown
   - GameCodeText
   - NoGameCodeText
+  - ClientVotingCanvas
+  - adminUnitName
+  - adminUnitTime
+  - adminUnitLoc
   layers:
   - Default
   - TransparentFX

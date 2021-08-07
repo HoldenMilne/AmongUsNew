@@ -72,6 +72,7 @@
     <Compile Include="Assets\HandleArmsUpdater.cs" />
     <Compile Include="Assets\CustomNetworkDiscoveryHUD.cs" />
     <Compile Include="Assets\StationsAndHubs\Scripts\GameCodeReverser.cs" />
+    <Compile Include="Assets\Scripts\PlayerRoleCanvas.cs" />
     <Compile Include="Assets\Scripts\GoalAnimator.cs" />
     <Compile Include="Assets\StationsAndHubs\Scripts\CanvasFlipper.cs" />
     <Compile Include="Assets\Scripts\Chart Course\ChartCourseShipController.cs" />
@@ -87,8 +88,10 @@
     <Compile Include="Assets\HandleController.cs" />
     <Compile Include="Assets\DiscoveredServerController.cs" />
     <Compile Include="Assets\StabilizeSteeringController.cs" />
+    <Compile Include="Assets\StationsAndHubs\Scripts\SettingsManager.cs" />
     <Compile Include="Assets\RoomOptionsUpdater.cs" />
     <Compile Include="Assets\StationController.cs" />
+    <Compile Include="Assets\GameStateManager.cs" />
     <Compile Include="Assets\StationsAndHubs\Scripts\AdminPanelData.cs" />
     <Compile Include="Assets\StationsAndHubs\Scripts\PlayerSelect.cs" />
     <Compile Include="Assets\EmptyGameController.cs" />
@@ -103,6 +106,7 @@
     <Compile Include="Assets\StationsAndHubs\Scripts\CustomCanvasFlipper.cs" />
     <Compile Include="Assets\IP\IPCoder.cs" />
     <Compile Include="Assets\StationsAndHubs\Scripts\SoundController.cs" />
+    <Compile Include="Assets\VotingTimer.cs" />
     <Compile Include="Assets\GifAnimator.cs" />
     <Compile Include="Assets\HoverHider.cs" />
     <Compile Include="Assets\DontDestoryOnLoad.cs" />
@@ -124,6 +128,7 @@
     <Compile Include="Assets\StationsAndHubs\Scripts\GCCaller.cs" />
     <Compile Include="Assets\ScrollLerp.cs" />
     <Compile Include="Assets\Scripts\Clear Asteroids\ClearAsteroidsController.cs" />
+    <Compile Include="Assets\StationsAndHubs\Scripts\AdminPanelHider.cs" />
     <Compile Include="Assets\StationsAndHubs\Scripts\GameTasks\GameTask.cs" />
     <Compile Include="Assets\StationsAndHubs\Scripts\PlayerDataDesigner.cs" />
     <Compile Include="Assets\StationsAndHubs\Scripts\LoadingController.cs" />

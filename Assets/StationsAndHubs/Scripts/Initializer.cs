@@ -50,6 +50,7 @@ namespace StationsAndHubs.Scripts
                 if (!File.Exists(path))
                     CreateFile(path);
             }
+            
         }
 
         private static void CreateFile(string path)
@@ -68,12 +69,14 @@ namespace StationsAndHubs.Scripts
             switch (path)
             {
                 case settingsFile:
-                    AmongUsGoSettings.singleton.SaveSettings();
+                    //if (AmongUsGoSettings.singleton == null)
+                    //    new AmongUsGoSettings();
                     break;
                 case DEFAULT_TASKS:
                     CopyDefaultTaskFileFromAssets(fs);
                     break;
             }
+            fs.Close();
         }
 
         private static void CopyDefaultTaskFileFromAssets(FileStream fileStream)
@@ -147,11 +150,97 @@ namespace StationsAndHubs.Scripts
         public bool ghostsVisitStations = false;
         public bool crewWinsOnTaskCompletion = false;
         public bool useAsAdminPanel = false;
+        public bool showRoleOnDead = false;
+        public bool adminPanelOnlyShowAtStations = true;
 
         // putting the saveable settings in here.
         public void LoadSettings()
         {
+            string filePath = Initializer.workingDirectory + "/" + Initializer.settingsFile;
             // read this from file.
+            if (!File.Exists(filePath))
+            {
+                File.Create(filePath);
+                
+                SaveSettings();
+                return;
+            }
+            StreamReader sr = new StreamReader(filePath);
+            
+            string line;
+            
+            int i;
+            bool b;
+            
+            while ((line = sr.ReadLine()) != null)
+            {
+                string[] spl = line.Split(':');
+                string val = spl[1];
+                switch (spl[0])
+                {
+                    case "shortTasks":
+                        if (int.TryParse(val,out i))
+                        {
+                            shortTasks = i;
+                        }
+                        break;
+                    case "longTasks":
+                        if (int.TryParse(val,out i))
+                        {
+                            longTasks = i;
+                        }
+                        break;
+                    case "numImposters":
+                        if (int.TryParse(val,out i))
+                        {
+                            numImposters = i;
+                        }
+                        break;
+                    case "votingTime":
+                        if (int.TryParse(val,out i))
+                        {
+                            votingTime = i;
+                        }
+                        break;
+                    case "alarm":
+                        alarm = val;
+                        break;
+                    case "taskListName":
+                        taskListName = val;
+                        break;
+                    case "assignImposters":
+                        if (bool.TryParse(val,out b))
+                        {
+                            assignImposters = b;
+                        }
+                        break;
+                    case "ghostsVisitStations":
+                        if (bool.TryParse(val,out b))
+                        {
+                            ghostsVisitStations = b;
+                        }
+                        break;
+                    case "crewWinsOnTaskCompletion":
+                        if (bool.TryParse(val,out b))
+                        {
+                            crewWinsOnTaskCompletion = b;
+                        }
+                        break;
+                    case "useAsAdminPanel":
+                        if (bool.TryParse(val,out b))
+                        {
+                            useAsAdminPanel = b;
+                        }
+                        break;
+                    case "showRoleOnDead":
+                        if (bool.TryParse(val,out b))
+                        {
+                            showRoleOnDead = b;
+                        }
+                        break;
+                }
+            }
+            sr.Close();
         }
         
         public void SaveSettings()
@@ -165,10 +254,12 @@ namespace StationsAndHubs.Scripts
                           "assignImposters:"+assignImposters+"\n"+
                           "ghostsVisitStations:"+ghostsVisitStations+"\n"+
                           "crewWinsOnTaskCompletion:"+crewWinsOnTaskCompletion+"\n"+
-                          "useAsAdminPanel:"+useAsAdminPanel+"\n";
+                          "useAsAdminPanel:"+useAsAdminPanel+"\n"+
+                          "showRoleOnDead:"+showRoleOnDead+"\n";
 
             var sw = new StreamWriter(Initializer.workingDirectory + "/" + Initializer.settingsFile);
             sw.Write(text);
+            sw.Flush();
             sw.Close();
         }
         

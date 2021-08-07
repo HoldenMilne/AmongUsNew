@@ -142,7 +142,6 @@ namespace StationsAndHubs.Scripts
         public bool useAsAdminPanel = false;
         public override void OnServerConnect(NetworkConnection conn)
         {
-            Debug.Log("CONN TIME");
             base.OnServerConnect(conn);
         }
 
@@ -166,9 +165,11 @@ namespace StationsAndHubs.Scripts
             // instantiating a "Player" prefab gives it the name "Player(clone)"
             // => appending the connectionId is WAY more useful for debugging!
             var data = player.GetComponent<PlayerData>();
+            data.MakeLocalPlayer();
             data.SetConnId(conn.connectionId);
             Debug.Log("Calling player obj <<< "+conn.connectionId);
-            name = data.name;
+            player.name = data.name + " xx "+conn.connectionId;
+            
             objects.Add(conn.connectionId, player.GetComponent<NetworkIdentity>());
             NetworkServer.AddPlayerForConnection(conn, player);
 
@@ -328,7 +329,90 @@ namespace StationsAndHubs.Scripts
         /* Load the Correct Scene for Each */
         public void StartGame()
         {
-            FindObjectOfType<PlayerData>().StartGame(AmongUsGoSettings.singleton.shortTasks,AmongUsGoSettings.singleton.longTasks,AmongUsGoSettings.singleton.taskListName);
+            var locations = new string[stationIdToLocation.Count];
+            int i = 0;
+            GameTask.locations.Clear();
+            foreach (var k in stationIdToLocation.Values)
+            {
+                locations[i] = k;
+                GameTask.locations.Add(k);
+                i++;
+            }
+            Debug.Log(locations.Length);
+            FindObjectOfType<SettingsManager>().LoadSettingsFromPanel();
+            GameTask.LoadGameTasks(AmongUsGoSettings.singleton.taskListName);
+            
+
+            string[] imposterNames = null;
+            if (AmongUsGoSettings.singleton.assignImposters)
+            {
+                Debug.Log("ASSIGN IMPOSTERS"+AmongUsGoSettings.singleton.assignImposters);
+                foreach (var _name in players.Keys)
+                {
+                    var go = GameObject.Find(_name);
+                    Debug.Log(go);
+                    try
+                    {
+                        Debug.Log(go.name);
+                        go.GetComponent<PlayerData>().isImposter = false;
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Log("ERROR2");
+                        Debug.Log(e.Data);
+                        Debug.Log(e.Message);
+                        Debug.Log(e.Source);
+                        Debug.Log(e.StackTrace);
+                    }
+                }
+                imposterNames = AssignImposters(AmongUsGoSettings.singleton.numImposters,out imposters);
+                foreach (var _name in imposters)
+                {
+                    Debug.Log("imposters");
+                    var go = GameObject.Find(_name);
+                    Debug.Log(go);
+                    try
+                    {
+                        Debug.Log(go.name);
+                        go.GetComponent<PlayerData>().isImposter =true;
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Log("ERROR");
+                        Debug.Log(e.Data);
+                        Debug.Log(e.Message);
+                        Debug.Log(e.Source);
+                        Debug.Log(e.StackTrace);
+                    }
+                }
+            }
+
+            foreach (var pd in FindObjectsOfType<PlayerData>())
+            {
+                var _tasks = GameTask.getGameTasks(AmongUsGoSettings.singleton.shortTasks,
+                    AmongUsGoSettings.singleton.longTasks, AmongUsGoSettings.singleton.taskListName);
+
+                Debug.Log("TASKSLENGTH:" + _tasks.Count);
+                string[] tasksStrings = new string [_tasks.Count];
+
+                i = 0;
+                foreach (var t in _tasks)
+                {
+                    tasksStrings[i] = t.ToString();
+                    i += 1;
+                }
+
+                if (pd.type == PlayerData.PlayerType.Player)
+                {
+                    pd.SetCurrentLocation("Unknown3");
+                    pd.SetLastLocation("Unknown3");
+                    pd.StartGameThin(AmongUsGoSettings.singleton.shortTasks, AmongUsGoSettings.singleton.longTasks,
+                        tasksStrings, AmongUsGoSettings.singleton.assignImposters,
+                        AmongUsGoSettings.singleton.ghostsVisitStations,
+                        AmongUsGoSettings.singleton.crewWinsOnTaskCompletion, imposterNames);
+                }
+            }
+
             if (true) return;
             var nids = FindObjectsOfType<NetworkIdentity>();
 
@@ -337,7 +421,7 @@ namespace StationsAndHubs.Scripts
                 PlayerData pd;
                 if ((pd = n.GetComponent<PlayerData>()) != null)
                 {
-                    pd.StartGame(0,0,"");
+                    pd.StartGame(0,0,null,null);
                 }
             }
 
@@ -350,8 +434,25 @@ namespace StationsAndHubs.Scripts
                 SceneManager.LoadScene("VotingScene");
             }
         }
-        
-        public string GetLocalIPv4()
+        private List<String> imposters = new List<string>();
+        private string[] AssignImposters(int nImposters, out List<string> imposters)
+        {
+            imposters = new List<string>();
+            //if (nImposters >= players.Count) return false;
+            var names = players.Keys.ToList();
+            for (int i = 0; i < nImposters; i++)
+            {
+                if (names.Count == 0) break;
+                var n = names[UnityEngine.Random.Range(0, names.Count)];// get the name
+                names.Remove(n);
+                imposters.Add(n);
+            }
+
+            return imposters.ToArray();
+        }
+
+
+        public static string GetLocalIPv4()
         {
             return Dns.GetHostEntry(Dns.GetHostName())
                 .AddressList.First(
@@ -378,8 +479,10 @@ namespace StationsAndHubs.Scripts
                 players.Add(newString,keyval);//removal doesn't work...
                 objects.Remove(connID);
                 objects.Add(connID,keyval);
+                objects[connID].gameObject.GetComponent<PlayerData>().playerName = newString;
                 playerNames[ind] = newString;
                 idToPlayer[connID] = newString;
+                
                 RemakePlayerPanel();
                     
             
@@ -416,6 +519,7 @@ namespace StationsAndHubs.Scripts
             playerNames.Add(_name);//
             idToPlayer.Add(connID, _name);
             objects[connID].name = _name;
+            objects[connID].gameObject.GetComponent<PlayerData>().playerName = _name;
             RemakePlayerPanel();
         }
 
@@ -449,6 +553,7 @@ namespace StationsAndHubs.Scripts
             var stationData = objects[connID].GetComponent<PlayerData>();
             stationData.playerName = gc;
             stationData.name = gc;
+            stationData.type = PlayerData.PlayerType.Station;
             stationData.currentLocation = location;
             stationData.connId = connID;
             // set up a station call back that tells it a gamecode
@@ -487,6 +592,219 @@ namespace StationsAndHubs.Scripts
                 locSpawnPoint = GameObject.FindWithTag("locDisplaySpawnPoint");
                 locScrollView = locSpawnPoint.transform.parent.parent.gameObject;
             }
+        }
+
+        public string SendToServer(string s)
+        {
+            string[] spl = s.Split(new string[]{"--"}, System.StringSplitOptions.RemoveEmptyEntries);
+            string resp = "NONE--NUL";
+            Debug.Log(spl[0]+ " <LOG");
+            switch (spl[0].ToUpper())
+            {
+                case "LOC" :
+                    try
+                    {
+                        resp = spl[0] + "--" + stationIdToLocation[spl[1]];
+                    }
+                    catch
+                    {
+                        return "ERR--NULL";
+                    }
+
+                    break;
+                case "COMPLETE":
+                    // Todo: Check if is mafia
+                    // Todo: Increment victory total if not
+                    bool report = true;
+                    
+                    int index;
+                    if ((index = spl[1].IndexOf("-NOREPORT", StringComparison.Ordinal)) >= 0)
+                    {
+                        spl[1] = spl[1].Substring(0,index);
+                        report = false;
+                    }
+                    var complete = GameTask.findGameTaskByID(spl[1]);
+                    Debug.Log(complete.next);
+                    if (!complete.next.Equals("NUL",StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        resp = spl[0]+ "--"+GameTask.findGameTaskByID(complete.next);
+                    }
+                    else
+                    {
+                        resp = spl[0] + "--NUL";
+                    }
+
+                    return resp;
+                    if (tasks == null) return "ERR--NUL";
+                    GameTask addTask=null, removeTask=null;
+                    bool addremove = false;
+                    foreach (var task in tasks)
+                    {
+                        if(task.name.Equals(spl[1],StringComparison.InvariantCultureIgnoreCase))// if has a new task
+                        {
+                            Debug.Log("TASK>"+task.name+"<>"+task.next);
+                            if(!task.next.Equals("nul",StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                addTask = GameTask.findGameTaskByID(task.next);
+                                if(addTask!=null)
+                                {
+                                    removeTask=task;
+                                    addremove=true;
+                                }
+                            }
+                            break;
+                        }
+                    }
+
+                    resp = spl[0] + "--nul";
+                    if(addremove)
+                    {
+                        resp = spl[0] + "--" + removeTask.name+":"+removeTask.id + ">>"+addTask.name+":"+addTask.id+":"+addTask.location;
+                    }
+
+                    break;
+            }
+
+            return resp;
+        }
+
+        /**
+         * Returns true if win
+         */
+        public bool CheckWin()
+        {
+            var settings = AmongUsGoSettings.singleton;
+
+            var count = 0;
+            var total = 0;
+            foreach (var pd in FindObjectsOfType<PlayerData>())
+            {
+                if (pd.type == PlayerData.PlayerType.Player)
+                {
+                    count += 1;
+                    total += pd.tasksCompleted;
+                }
+            }
+            Debug.Log(total+  ": :: :"+(settings.longTasks + settings.shortTasks) * (count-settings.numImposters));
+            // true nTasks >= max nTasks 
+            return total>=(settings.longTasks + settings.shortTasks) * (count-settings.numImposters) && settings.crewWinsOnTaskCompletion;
+        }
+
+        /**
+         * Used to alert to the end of game
+         */
+        public void GameEnd()
+        {
+            foreach (var pd in GameObject.FindObjectsOfType<PlayerData>())
+            {
+                switch (pd.type)
+                {
+                    case PlayerData.PlayerType.Player:
+                        // return to menu area with an initial load (name should be already set)
+                        pd.AlertToGameEnd();
+                        break;
+                }
+            }
+        }
+
+        public void CallForResume()
+        {
+            foreach (var pd in GameObject.FindObjectsOfType<PlayerData>())
+            {
+                switch (pd.type)
+                {
+                    case PlayerData.PlayerType.Player:
+                        // return to menu area with an initial load (name should be already set)
+                        pd.ResumeGame();
+                        break;
+                }
+            }
+        }
+
+        private int deadImposters;
+        private int deadCrewmates;
+
+        
+        public void IAmDead(int connId)
+        {
+            Debug.Log("I AM DEAD");
+            var pd = objects[connId].gameObject.GetComponent<PlayerData>();
+            pd.isDead = true;
+            if (AmongUsGoSettings.singleton.assignImposters)
+            {
+                if (pd.isImposter)
+                {
+                    deadImposters += 1;
+                    var nImposter = AmongUsGoSettings.singleton.numImposters;
+                    Debug.Log(deadImposters+ " <DI");
+                    if (deadImposters >= nImposter || (nImposter >= playerNames.Count && playerNames.Count <= deadImposters))
+                    {
+                        //crewmates win
+                        CrewmatesWin();
+                    }
+                }
+                else
+                {
+                    deadCrewmates += 1;
+                    Debug.Log(deadCrewmates+ " <DC");
+                    if (deadCrewmates >= objects.Count - AmongUsGoSettings.singleton.numImposters)
+                    {
+                        ImpostersWin();
+                    }
+                }
+                
+            }
+        }
+
+        void CrewmatesWin()
+        {
+            foreach (var pd in GameObject.FindObjectsOfType<PlayerData>())
+            {
+                if(pd.type.Equals(PlayerData.PlayerType.Player))
+                    pd.CrewmatesWin();
+            }
+
+            StartCoroutine(DelayGameEnd());
+        }
+
+        public IEnumerator DelayGameEnd()
+        {
+            var gsm = FindObjectOfType<GameStateManager>();
+            gsm.votingCanvas.enabled = false;
+            gsm.playingCanvas.enabled = false;
+            gsm.StopAllCoroutines();
+            
+            yield return new WaitForSeconds(2);
+            GameEnd();
+            yield return new WaitForSeconds(5);
+            foreach (var pd in GameObject.FindObjectsOfType<PlayerData>())
+            {
+                if(pd.type.Equals(PlayerData.PlayerType.Player))
+                    pd.ForceClosedWinPanel();
+            }
+        }
+
+        void ImpostersWin()
+        {
+            foreach (var pd in GameObject.FindObjectsOfType<PlayerData>())
+            {
+                if(pd.type.Equals(PlayerData.PlayerType.Player))
+                    pd.ImpostersWin();
+            }
+            StartCoroutine(DelayGameEnd());
+        }
+
+        public PlayerData FindByConnId(int connId)
+        {
+            foreach (var pd in GameObject.FindObjectsOfType<PlayerData>())
+            {
+                if (pd.connId == connId)
+                {
+                    return pd;
+                }
+            }
+
+            return null;
         }
     }
 }

@@ -19,6 +19,7 @@ public class ScrollLerp : MonoBehaviour
     {
         rect = GetComponent<RectTransform>();
         y = rect.anchoredPosition.y;
+        //running = false;
         StartCoroutine(LookUpCoroutine());
     }
 
@@ -57,6 +58,12 @@ public class ScrollLerp : MonoBehaviour
     void Update()
     {
         
+        if (Input.GetKeyDown(KeyCode.Space) && !running)
+        {
+            FindObjectOfType<SoundController>()._music_source.Play();
+            running = true;
+            StartCoroutine(LookUpCoroutine());
+        }
     }
 
     private IEnumerator TurnOnUI()
